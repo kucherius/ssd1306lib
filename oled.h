@@ -276,3 +276,27 @@ OLED_err OLED_put_pixel(OLED *oled, uint8_t x, uint8_t y, bool pixel_state);
  * (!) Notice: method is not atomic. If required, protect it with lock
  */
 OLED_err OLED_put_rectangle(OLED *oled, uint8_t x_from, uint8_t y_from, uint8_t x_to, uint8_t y_to, enum OLED_params params);
+
+
+/**
+ * OLED_put_polygon() - draws a polygon
+ *
+ * @n_vert: number of vertices of polygon
+ * @x_axis: array of x coordinates
+ * @y_axis: array of y coordinates
+ * @params: parametes that difine color of the line and wheather the polygon should be filled or not
+ */
+OLED_err OLED_put_polygon(OLED *oled, uint8_t n, uint8_t *x_axis, uint8_t *y_axis, enum OLED_params params);
+
+
+/**
+ * point_in_polygon() - returns true if a point (x, y) is within a polygon or false otherwise.
+ * https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
+ *
+ * @n_vert: number of vertices of polygon
+ * @x_axis: array of x coordinates
+ * @y_axis: array of y coordinates
+ * @x: x coorditate of a point of interest
+ * @y: y coorditate of a point of interest
+ */
+bool point_in_polygon(uint8_t n_vert, uint8_t *x_axis, uint8_t *y_axis, uint8_t x, uint8_t y);

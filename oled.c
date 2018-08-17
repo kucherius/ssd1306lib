@@ -20,7 +20,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
  * THE SOFTWARE.
  */
-
 #include "oled.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -332,4 +331,62 @@ OLED_err OLED_put_rectangle(OLED *oled, uint8_t x_from, uint8_t y_from, uint8_t 
 	//}
 
 	return OLED_EOK;
+}
+
+
+OLED_err OLED_put_polygon(OLED *oled, uint8_t n_vert, uint8_t *x_axis, uint8_t *y_axis, enum OLED_params params)
+{
+    /* polygon should have at least 3 vertices */
+    if (n_vert < 3)
+        return OLED_EPARAMS;
+
+    if (params > (OLED_BLACK | OLED_FILL))
+        return OLED_EPARAMS;
+
+    bool is_fill = (OLED_FILL & params) != 0;
+
+    if (is_fill) {
+        uint8_t x, y;
+        uint8_t w_max = oled->width - 1;
+        uint8_t h_max = oled->height - 1;
+        bool pixel_color = (OLED_BLACK & params) != 0;
+
+        for (x = 0; x <= w_max; x++) {
+            for (y = 0; y <= h_max; y++) {
+                if (point_in_polygon(n_vert, x_axis, y_axis, x, y))
+                    OLED_put_pixel_(oled, x, y, pixel_color);
+            }
+        }
+        return OLED_EOK;
+    } else {
+        uint8_t i;
+        OLED_err rc_polygon;
+
+        /* draw closing line first */
+        rc_polygon = OLED_put_line(oled, x_axis[n_vert-1], y_axis[n_vert-1], x_axis[0], y_axis[0], OLED_FILL | params);
+        for (i = 0; i < n_vert-1; i++) {
+            rc_polygon = OLED_put_line(oled, x_axis[i], y_axis[i], x_axis[i+1], y_axis[i+1], OLED_FILL | params);
+        }
+        /* Here we return code of the last operation and if there was an error before it would be replaced though.
+         * Errors while drawing are to be seen on the screen showing what went wrong and thus give us
+         * more information rather than returning upon an error.
+         */
+        return rc_polygon;
+    }
+
+}
+
+
+bool point_in_polygon(uint8_t n_vert, uint8_t *x_axis, uint8_t *y_axis, uint8_t x, uint8_t y)
+{
+    uint8_t i, j;
+    bool is_inside = false;
+
+    for (i = 0, j = n_vert - 1; i < n_vert; j = i++) {
+        if (((y_axis[i] > y) != (y_axis[j] > y)) &&
+                (x < (x_axis[j] - x_axis[i]) * (y - y_axis[i]) / (y_axis[j] - y_axis[i]) + x_axis[i])) {
+            is_inside = !is_inside;
+        }
+    }
+    return is_inside;
 }
